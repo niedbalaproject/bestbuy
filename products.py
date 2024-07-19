@@ -17,6 +17,7 @@ class Product:
         self.quantity = quantity
         if self.quantity == 0:
             self.deactivate()
+        print(f"Set quantity for {self.name} to {self.quantity}, active: {self.active}")
 
     def is_active(self) -> bool:
         return self.active
@@ -26,6 +27,7 @@ class Product:
 
     def deactivate(self):
         self.active = False
+        print(f"{self.name} deactivated")
 
     def show(self) -> str:
         return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}"
