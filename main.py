@@ -181,7 +181,9 @@ def main():
         prod.Product("MacBook Air M2", price=1450, quantity=100),
         prod.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
         prod.Product("Google Pixel 7", price=500, quantity=250),
-        prod.Product("Nice Earbuds", price=40, quantity=200)
+        prod.Product("Nice Earbuds", price=40, quantity=200),
+        prod.NonStockedProduct("Windows License", price=125),
+        prod.LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
     ]
     best_buy = store.Store(product_list)
     start(best_buy)

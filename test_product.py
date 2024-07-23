@@ -72,7 +72,7 @@ def test_get_total_quantity(store_with_products):
 
 def test_get_all_products(store_with_products):
     active_products = store_with_products.get_all_products()
-    assert len(active_products) == 2  # Only two products should be active
+    assert len(active_products) == 3  # three products should be active
     assert all(product.is_active() for product in active_products)
 
 
