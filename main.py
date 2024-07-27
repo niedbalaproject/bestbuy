@@ -1,5 +1,6 @@
 import products as prod
 import store
+import promotions as promo
 
 
 def list_products(store_obj):
@@ -38,7 +39,8 @@ def display_products_with_numbers(store_obj):
 
 def select_product(product_list):
     """Select a product by number or name."""
-    choice = input("\nEnter the number or part of the name of the product you want to buy (or 'done' to finish): ").strip()
+    choice = input("\nEnter the number or part of the name of the product /"
+                   "you want to buy (or 'done' to finish): ").strip()
 
     if choice.lower() == 'done':
         return None
@@ -181,10 +183,19 @@ def main():
         prod.Product("MacBook Air M2", price=1450, quantity=100),
         prod.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
         prod.Product("Google Pixel 7", price=500, quantity=250),
-        prod.Product("Nice Earbuds", price=40, quantity=200),
         prod.NonStockedProduct("Windows License", price=125),
         prod.LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
     ]
+
+    # Adding promotions
+    discount_promotion = promo.PercentageDiscount("20% off", 20)
+    second_item_half_price = promo.SecondItemHalfPrice("Second item at half price")
+    buy_two_get_one_free = promo.BuyTwoGetOneFree("Buy 2, get 1 free")
+
+    product_list[0].set_promotion(discount_promotion)  # MacBook Air M2
+    product_list[1].set_promotion(second_item_half_price)  # Bose QuietComfort Earbuds
+    product_list[2].set_promotion(buy_two_get_one_free)  # Google Pixel 7
+
     best_buy = store.Store(product_list)
     start(best_buy)
 

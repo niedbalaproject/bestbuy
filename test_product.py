@@ -1,6 +1,7 @@
 import pytest
-from products import Product
+from products import Product, NonStockedProduct, LimitedProduct
 from store import Store
+from promotions import PercentageDiscount, SecondItemHalfPrice, BuyTwoGetOneFree
 
 
 # Test Product functionalities
@@ -85,3 +86,61 @@ def test_order(store_with_products):
     assert product2.get_quantity() == 45
     with pytest.raises(Exception):
         store_with_products.order([(product1, 200)])
+
+
+# Test NonStockedProduct functionalities
+def test_create_non_stocked_product():
+    product = NonStockedProduct("Non-Stocked Product", price=200.0)
+    assert product.name == "Non-Stocked Product"
+    assert product.price == 200.0
+    assert product.quantity == 0  # Should always be 0
+    assert product.is_active()
+
+
+def test_non_stocked_product_quantity_handling():
+    product = NonStockedProduct("Non-Stocked Product", price=200.0)
+    assert product.get_quantity() == 0
+    product.set_quantity(10)  # Attempt to set quantity
+    assert product.get_quantity() == 0  # Quantity should remain 0
+
+
+def test_non_stocked_product_buy():
+    product = NonStockedProduct("Non-Stocked Product", price=200.0)
+    total_price = product.buy(5)
+    assert total_price == 1000.0  # 5 items at $200 each
+    assert product.get_quantity() == 0  # Quantity remains unaffected
+
+
+#  Test Promotions
+def test_apply_percentage_discount():
+    product = Product("Test Product", price=100.0, quantity=100)
+    promo = SecondItemHalfPrice("Second item half price")
+    product.set_promotion(promo)
+    assert product.buy(2) == pytest.approx(150.0)
+
+
+def test_apply_buy_two_get_one_free():
+    product = Product("Test Product", price=100.0, quantity=100)
+    promo = BuyTwoGetOneFree("Buy 2 Get 1 Free")
+    product.set_promotion(promo)
+    assert product.buy(3) == pytest.approx(200.0)
+
+
+# Additional Store Tests for Promotions
+def test_order_with_promotions(store_with_products):
+    product1, product2, _ = store_with_products.products
+    product1.set_promotion(PercentageDiscount("10% off", 10))
+    product2.set_promotion(BuyTwoGetOneFree("Buy 2 Get 1 Free"))
+    shopping_list = [(product1, 10), (product2, 3)]
+    total_price = store_with_products.order(shopping_list)
+    assert total_price == pytest.approx(130.0)  # product 1 total price = 90, total price for product 2 = 40
+
+
+def test_order_with_limited_products(store_with_products):
+    limited_products = LimitedProduct("Limited Product", price=50, quantity=10, maximum=2)
+    store_with_products.add_product(limited_products)
+    shopping_list = [(limited_products, 2)]
+    total_price = store_with_products.order(shopping_list)
+    assert total_price == 100.0
+    with pytest.raises(ValueError):
+        store_with_products.order([(limited_products, 3)])  # should raise an error, limit is 2

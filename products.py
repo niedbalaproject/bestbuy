@@ -7,6 +7,7 @@ class Product:
         self.price = price
         self.quantity = quantity
         self.active = True
+        self.promotion = None
 
     def get_quantity(self) -> float:
         return self.quantity
@@ -29,8 +30,15 @@ class Product:
         self.active = False
         print(f"{self.name} deactivated")
 
+    def get_promotion(self):
+        return self.promotion
+
+    def set_promotion(self, promotion):
+        self.promotion = promotion
+
     def show(self) -> str:
-        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}"
+        promotion_str = f", Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}{promotion_str}"
 
     def buy(self, quantity) -> float:
         if quantity <= 0:
@@ -40,7 +48,10 @@ class Product:
         if quantity > self.quantity:
             raise Exception(f"Not enough quantity available for {self.name}. /"
                             f"Available: {self.quantity}, Requested: {quantity}")
-        total_price = self.price * quantity
+        if self.promotion:
+            total_price = self.promotion.apply_promotion(self, quantity)
+        else:
+            total_price = self.price * quantity
         self.set_quantity(self.quantity - quantity)
         return total_price
 
@@ -57,6 +68,9 @@ class NonStockedProduct(Product):
 
     def show(self) -> str:
         return f"{self.name}, Price: {self.price}, Quantity: Non-Stocked"
+
+    def buy(self, quantity: int) -> float:
+        return self.price * quantity  # quantity is irrelevant, it should always return price * quantity
 
 
 class LimitedProduct(Product):
