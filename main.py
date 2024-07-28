@@ -5,7 +5,7 @@ import promotions as promo
 
 def list_products(store_obj):
     """Generate a formatted list of products in the store."""
-    product_listings = [f"{i+1}. {product.show()}" for i, product in enumerate(store_obj.get_all_products())]
+    product_listings = [f"{i + 1}. {product}" for i, product in enumerate(store_obj.get_all_products())]
     return "\nListing all products:\n" + "\n".join(product_listings)
 
 
@@ -14,24 +14,10 @@ def show_total_amount(store_obj):
     return f"\nTotal amount in store: {total_quantity}"
 
 
-def get_product_by_name(store_obj, name):
-    """Find a product in the store by its name."""
-    name = name.lower()
-    matches = [product for product in store_obj.get_all_products() if name in product.name.lower()]
-    if len(matches) == 1:
-        return matches[0]
-    elif len(matches) > 1:
-        print("Multiple products found:")
-        for match in matches:
-            print(f"- {match.name}")
-        print("Please enter a full and correct name of the product.")
-    return None
-
-
 def display_products_with_numbers(store_obj):
     """Display available products with numbers."""
     product_list = store_obj.get_all_products()
-    product_list_with_numbers = [f"{i + 1}. {product.show()}" for i, product in enumerate(product_list)]
+    product_list_with_numbers = [f"{i + 1}. {product}" for i, product in enumerate(product_list)]
     for product in product_list_with_numbers:
         print(product)
     return product_list
@@ -39,7 +25,7 @@ def display_products_with_numbers(store_obj):
 
 def select_product(product_list):
     """Select a product by number or name."""
-    choice = input("\nEnter the number or part of the name of the product /"
+    choice = input("\nEnter the number or part of the name of the product "
                    "you want to buy (or 'done' to finish): ").strip()
 
     if choice.lower() == 'done':
@@ -62,7 +48,7 @@ def select_product(product_list):
         else:
             print("Multiple products found:")
             for i, matching_product in enumerate(matching_products, 1):
-                print(f"{i}. {matching_product.show()}")
+                print(f"{i}. {matching_product}")
             sub_choice = input("Please enter the number of the product you meant: ").strip()
             try:
                 sub_choice_index = int(sub_choice) - 1
@@ -76,15 +62,31 @@ def select_product(product_list):
                 return select_product(product_list)
 
 
-def enter_quantity(product):
-    """Enter the quantity for the selected product."""
+def enter_quantity(product, current_quantity_in_cart=0):
+    """Enter the quantity for the selected product, considering cart limits."""
     while True:
         try:
-            quantity = int(input(f"Enter the quantity for {product.name} (Available: {product.get_quantity()}): "))
+            # Determine the maximum quantity that can be added
+            if isinstance(product, prod.NonStockedProduct):
+                max_quantity = float('inf')  # No stock limit for NonStockedProduct
+                available_text = ""  # No need to display available quantity
+            elif isinstance(product, prod.LimitedProduct):
+                max_quantity = product.maximum - current_quantity_in_cart
+                available_text = f" (Max per order: {product.maximum})"
+            else:
+                max_quantity = product.quantity - current_quantity_in_cart
+                available_text = f" (Available: {product.quantity})"
+
+            if max_quantity <= 0:
+                print(f"\nNo more {product.name} can be added to the cart due to stock or order limits.\n")
+                return 0  # No quantity can be added
+
+            quantity = int(input(f"Enter the quantity for {product.name}{available_text}: "))
+
             if quantity <= 0:
                 print("Quantity should be at least 1. Please try again.")
-            elif quantity > product.get_quantity():
-                print(f"Not enough stock. Available quantity: {product.get_quantity()}. Please try again.")
+            elif quantity > max_quantity:
+                print(f"Cannot add more than {max_quantity} of {product.name} to the cart. Please try again.")
             else:
                 return quantity
         except ValueError:
@@ -95,29 +97,41 @@ def create_shopping_list(store_obj):
     """Create a shopping list based on user input."""
     shopping_list = []
     product_list = store_obj.get_all_products()
+
     while True:
         display_products_with_numbers(store_obj)
-        product = select_product(product_list)
-        if product is None:
+        selected_product = select_product(product_list)
+        if selected_product is None:
             break
-        quantity = enter_quantity(product)
-        shopping_list.append((product, quantity))
-        print(f"\nProduct {product.name} added to the cart.")
+
+        # Check current quantity in cart for this product
+        current_quantity_in_cart = sum(qty for item, qty in shopping_list if item == selected_product)
+
+        quantity = enter_quantity(selected_product, current_quantity_in_cart)
+        if quantity > 0:
+            shopping_list.append((selected_product, quantity))
+            print(f"\nProduct {selected_product.name} added to the cart.\n")
     return shopping_list
 
 
 def place_order(store_obj, shopping_list):
     """Place an order and handle the output."""
-    output = ["\nMaking an order:"]
     if not shopping_list:
-        output.append("Your cart is empty. You haven't placed any order.")
-    else:
-        try:
-            total_price = store_obj.order(shopping_list)
-            output.append(f"Order placed successfully! Total price: {total_price}")
-        except Exception as e:
-            output.append(f"Error placing order: {e}")
-    return "\n".join(output)
+        return "\nYour cart is empty. You haven't placed any order."
+
+    try:
+        original_price = store_obj.calculate_original_price(shopping_list)
+        discounted_price = store_obj.calculate_discounted_price(shopping_list)
+        savings = original_price - discounted_price
+
+        if savings > 0:
+            return (f"\nOriginal total price: ${original_price:.2f}\n"
+                    f"Total price after promotions: ${discounted_price:.2f}\n"
+                    f"You have saved: ${savings:.2f}")
+        else:
+            return f"\nTotal price: ${original_price:.2f}"
+    except Exception as e:
+        return f"Error placing order: {e}"
 
 
 def make_order(store_obj):
@@ -152,7 +166,7 @@ def start(store_obj):
     print("\nWelcome to the Store!")
     actions = {
         "1": list_products,
-        "2": store.Store.get_total_quantity,
+        "2": show_total_amount,
         "3": make_order,
         "4": quit_program
     }
@@ -192,9 +206,9 @@ def main():
     second_item_half_price = promo.SecondItemHalfPrice("Second item at half price")
     buy_two_get_one_free = promo.BuyTwoGetOneFree("Buy 2, get 1 free")
 
-    product_list[0].set_promotion(discount_promotion)  # MacBook Air M2
-    product_list[1].set_promotion(second_item_half_price)  # Bose QuietComfort Earbuds
-    product_list[2].set_promotion(buy_two_get_one_free)  # Google Pixel 7
+    product_list[0].promotion = discount_promotion  # MacBook Air M2
+    product_list[1].promotion = second_item_half_price  # Bose QuietComfort Earbuds
+    product_list[2].promotion = buy_two_get_one_free  # Google Pixel 7
 
     best_buy = store.Store(product_list)
     start(best_buy)
