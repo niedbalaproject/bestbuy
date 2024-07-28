@@ -4,18 +4,23 @@ import promotions as promo
 
 
 def list_products(store_obj):
-    """Generate a formatted list of products in the store."""
+    """
+    Generate a formatted list of products in the store.
+    store_obj (store.Store): The store object containing the products.
+    """
     product_listings = [f"{i + 1}. {product}" for i, product in enumerate(store_obj.get_all_products())]
     return "\nListing all products:\n" + "\n".join(product_listings)
 
 
 def show_total_amount(store_obj):
+    """Display the total amount of products in the store."""
+
     total_quantity = store_obj.get_total_quantity()
     return f"\nTotal amount in store: {total_quantity}"
 
 
 def display_products_with_numbers(store_obj):
-    """Display available products with numbers."""
+    """Display available products with numbers for selection."""
     product_list = store_obj.get_all_products()
     product_list_with_numbers = [f"{i + 1}. {product}" for i, product in enumerate(product_list)]
     for product in product_list_with_numbers:
@@ -24,7 +29,7 @@ def display_products_with_numbers(store_obj):
 
 
 def select_product(product_list):
-    """Select a product by number or name."""
+    """Select a product by number or name from the displayed list."""
     choice = input("\nEnter the number or part of the name of the product "
                    "you want to buy (or 'done' to finish): ").strip()
 
@@ -94,7 +99,8 @@ def enter_quantity(product, current_quantity_in_cart=0):
 
 
 def create_shopping_list(store_obj):
-    """Create a shopping list based on user input."""
+    """Create a shopping list based on user input.
+    return: A list of tuples, each containing a Product and the desired quantity."""
     shopping_list = []
     product_list = store_obj.get_all_products()
 
@@ -115,7 +121,10 @@ def create_shopping_list(store_obj):
 
 
 def place_order(store_obj, shopping_list):
-    """Place an order and handle the output."""
+    """
+    Place an order and calculate the final cost after promotions.
+    return: A summary of the order including original price, discounted price, and savings.
+    """
     if not shopping_list:
         return "\nYour cart is empty. You haven't placed any order."
 
@@ -135,7 +144,11 @@ def place_order(store_obj, shopping_list):
 
 
 def make_order(store_obj):
-    """Main function to create a shopping list and place an order."""
+    """
+    Main function to create a shopping list and place an order.
+    store_obj (store.Store): The store object managing the products.
+    return: A summary of the order or an error message if the order fails.
+    """
     shopping_list = create_shopping_list(store_obj)
     return place_order(store_obj, shopping_list)
 
@@ -154,7 +167,10 @@ menu_options = [
 
 
 def display_menu():
-    """Generate the main menu."""
+    """
+    Generate the main menu.
+    return: The formatted menu string.
+    """
     menu_lines = []
     for idx, (option, _) in enumerate(menu_options, 1):
         menu_lines.append(f"{idx}. {option}")
@@ -162,7 +178,10 @@ def display_menu():
 
 
 def start(store_obj):
-    """Start the program."""
+    """
+    Start the store interaction program
+    store_obj (store.Store): The store object managing the products..
+    """
     print("\nWelcome to the Store!")
     actions = {
         "1": list_products,
@@ -192,7 +211,7 @@ def start(store_obj):
 
 
 def main():
-    """Main function with an initial setup of stock of inventory."""
+    """Main function with an initial setup of the store's inventory and promotions."""
     product_list = [
         prod.Product("MacBook Air M2", price=1450, quantity=100),
         prod.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
